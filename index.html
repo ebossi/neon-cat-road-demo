@@ -75,6 +75,7 @@
       <div id="error"><div><div id="error-msg"></div><button onclick="location.reload()">↻</button></div></div>
     </div>
   </div>
+  <script src="TemplateData/platform-config.js"></script>
   <script>
   (function () {
     var canvas = document.getElementById("unity-canvas");
@@ -119,6 +120,26 @@
       host.purchase = host.purchase || function (id) { mockOverlay("MOCK PURCHASE " + id, function () { host.emit("purchaseResult", id + ":ok"); }); };
     }
 
+    // Platform adapters. ONE store: the registered URL carries ?platform=onestore (the app frames the game).
+    // The engine waits for the adapter's initialisation (bounded) so the game sees the right features at start.
+    function inOneStore() {
+      if (/[?&]platform=onestore(&|$)/.test(location.search)) return true;
+      try {
+        var a = location.ancestorOrigins;
+        for (var i = 0; a && i < a.length; i++) if (/\.onestore\.(net|co\.kr)$/.test(new URL(a[i]).hostname)) return true;
+      } catch (e) {}
+      return false;
+    }
+    var platformReady = Promise.resolve();
+    if (inOneStore()) {
+      platformReady = Promise.race([
+        import("./TemplateData/onestore.js")
+          .then(function (m) { return m.start(host, (window.NeonCatConfig || {}).onestore); })
+          .catch(function (e) { console.warn("[NeonCat] ONE store adapter failed", e); }),
+        new Promise(function (resolve) { setTimeout(resolve, 4000); })
+      ]);
+    }
+
     // No pinch zoom, double-tap zoom, long-press menus or rubber-band scrolling inside webviews.
     ["gesturestart", "gesturechange", "gestureend", "contextmenu", "dblclick", "selectstart"].forEach(function (t) {
       document.addEventListener(t, function (e) { e.preventDefault(); }, { passive: false });
@@ -133,9 +154,9 @@
     var bar = document.getElementById("bar"), pct = document.getElementById("pct");
     var config = {
       arguments: [],
-      dataUrl: "Build/5a3011ee16580f61d2c7b70a4b781ef9.data.unityweb",
+      dataUrl: "Build/213b7003025869fecc4d6fda09ad52d8.data.unityweb",
       frameworkUrl: "Build/2a3485697af5caae1b570611cc4b51a4.framework.js.unityweb",
-      codeUrl: "Build/2ea1ab039af61c3ea12a33afdeef4e23.wasm.unityweb",
+      codeUrl: "Build/11ecbda338aa6b107131ed0e9a481acf.wasm.unityweb",
       streamingAssetsUrl: "StreamingAssets",
       companyName: "lemoncube",
       productName: "Neon Cat Road",
@@ -160,14 +181,17 @@
       host.readyMs = Math.round(performance.now() - t0);
       console.log("[NeonCat] title ready in " + host.readyMs + " ms");
       hideLoader();
+      if (typeof host.__onTitleReady === "function") host.__onTitleReady();
     };
     var script = document.createElement("script");
-    script.src = "Build/23e90e85d6d099224fd52e28e4003c87.loader.js";
+    script.src = "Build/036026d53c90178af7b3dac4203cbc62.loader.js";
     script.onerror = function () { showError("Failed to load. Check your connection."); };
-    script.onload = function () {
+    script.onload = function () { platformReady.then(boot); };
+    function boot() {
       createUnityInstance(canvas, config, function (p) {
         bar.style.width = Math.round(p * 100) + "%";
         pct.textContent = Math.round(p * 100) + "%";
+        if (typeof host.__progress === "function") host.__progress(p * 0.95); // 100 is sent at the title
       }).then(function (instance) {
         host.unity = instance;
         host.engineMs = Math.round(performance.now() - t0);
@@ -177,7 +201,7 @@
       }).catch(function (message) {
         showError(String(message));
       });
-    };
+    }
     document.body.appendChild(script);
   })();
   </script>
