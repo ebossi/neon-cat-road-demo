@@ -37,7 +37,8 @@ export async function start(host, settings) {
     rewardedPlacementId: "",     // ONEconsole > 수익화 > 인앱 광고 (rewarded)
     interstitialPlacementId: "", // ONEconsole > 수익화 > 인앱 광고 (interstitial)
     rewardServer: "",            // game server base URL (no trailing slash): rewarded-ad SSV and purchase verification
-    products: {},                // game product id -> ONEconsole in-app product id (managed product)
+    products: {},                // game product id -> ONEconsole in-app product id (managed product); a game product is
+                                 // sold only once it is listed here (register it in ONEconsole first)
   }, settings || {});
   // Remove-ads active (the game reports it at boot and when granted): no interstitials are preloaded or shown.
   // Defined before anything is awaited, so the game's boot-time report always finds it.
@@ -243,10 +244,12 @@ export async function start(host, settings) {
   // ---- In-app purchase: remove-ads (managed product, acknowledged by the game server, never consumed) ----
   // Sold only when the game server says it verifies purchases (GET /v1/health "purchases": true; without its ONE store
   // IAP secrets nothing would acknowledge them and ONE store refunds them after 3 days) and interstitials are
-  // configured (otherwise there is nothing to remove).
+  // configured (otherwise there is nothing to remove), and only once the product is listed in conf.products (it must
+  // be registered in ONEconsole first, or every payment fails).
+  const productListed = () => GAME_PRODUCTS.some((id) => !!(conf.products || {})[id]);
   let purchaseServer = "unknown"; // "on" | "off" (server says not set up) | "unknown" (not answered yet); asked again on resume
   let checkingServer = false;
-  host.hasPurchases = () => purchaseServer === "on" && sdk.iap.isSupported() && !!rewardServer && hasInterstitial();
+  host.hasPurchases = () => purchaseServer === "on" && productListed() && sdk.iap.isSupported() && !!rewardServer && hasInterstitial();
   async function checkPurchaseServer() {
     if (!rewardServer || !sdk.iap.isSupported() || checkingServer) return;
     checkingServer = true;

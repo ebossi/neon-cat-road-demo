@@ -13,6 +13,8 @@ window.NeonCatConfig = Object.assign({
     // the server reports "purchases": true at /v1/health (its ONE store IAP secrets are set; README step 7).
     rewardServer: "https://neoncat-rewards.lemoncube.workers.dev",
     // Game product id -> ONEconsole in-app product id (수익화 > 인앱 상품, managed product; the server's IAP_PRODUCTS).
-    products: { removingads: "removingads" },
+    // Remove-ads is sold only once listed here: add  removingads: "removingads"  after the managed product is registered
+    // in ONEconsole (registration needs approved settlement info). Until then the button stays hidden.
+    products: {},
   },
 }, window.NeonCatConfig || {});
