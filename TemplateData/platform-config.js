@@ -15,6 +15,6 @@ window.NeonCatConfig = Object.assign({
     // Game product id -> ONEconsole in-app product id (수익화 > 인앱 상품, managed product; the server's IAP_PRODUCTS).
     // Remove-ads is sold only once listed here: add  removingads: "removingads"  after the managed product is registered
     // in ONEconsole (registration needs approved settlement info). Until then the button stays hidden.
-    products: {},
+    products: { removingads: "removingads" },
   },
 }, window.NeonCatConfig || {});
