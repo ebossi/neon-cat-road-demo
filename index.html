@@ -76,6 +76,7 @@
     </div>
   </div>
   <script src="TemplateData/platform-config.js"></script>
+  <script src="TemplateData/firebase-analytics.js"></script>
   <script>
   (function () {
     var canvas = document.getElementById("unity-canvas");
@@ -182,6 +183,7 @@
     window.__neonCatLoaded = function () {
       host.readyMs = Math.round(performance.now() - t0);
       console.log("[NeonCat] title ready in " + host.readyMs + " ms");
+      if (typeof host.analytics === "function") host.analytics(JSON.stringify({ name: "web_game_ready", values: { load_ms: host.readyMs } }));
       hideLoader();
       if (typeof host.__onTitleReady === "function") host.__onTitleReady();
     };

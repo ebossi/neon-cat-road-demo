@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neon Cat Road · Firebase 연결 확인</title>
+<style>
+  body { max-width: 680px; margin: 48px auto; padding: 0 24px; background: #101320; color: #e9f0ff; font: 17px/1.7 system-ui, sans-serif; }
+  h1 { font-size: 26px; } h2 { font-size: 18px; } a { color: #7edee7; }
+  button { background: #183e47; color: #fff; border: 1px solid #69cdd6; border-radius: 10px; padding: 12px 20px; font: inherit; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; } pre { white-space: pre-wrap; background: #1b2032; border-radius: 12px; padding: 16px; font-size: 14px; }
+</style>
+<h1>Firebase 연결 확인</h1>
+<p>Neon Cat Road 웹 분석 테스트 페이지예요. 아래 이벤트를 보낸 뒤 Firebase DebugView에서 같은 테스트 ID가 도착했는지 확인하세요.</p>
+<p id="mode"></p>
+<button id="send" disabled>테스트 이벤트 보내기</button>
+<pre id="status" role="status">분석 연결 준비 중…</pre>
+<p>‘SDK에 전달됨’은 서버 수신 확인이 아니에요. 원스토어 앱과 일반 브라우저의 결과는 각각 확인해야 해요.</p>
+<p><a id="play" href="./?analytics_debug=1">게임에서 테스트하기</a></p>
+<script src="TemplateData/platform-config.js"></script>
+<script>
+  // This diagnostic page only sends explicitly marked test traffic.
+  const params = new URLSearchParams(location.search);
+  if (params.get('analytics_debug') !== '1') {
+    params.set('analytics_debug', '1');
+    history.replaceState(null, '', location.pathname + '?' + params);
+  }
+</script>
+<script src="TemplateData/firebase-analytics.js"></script>
+<script>
+  const host = window.NeonCatHost;
+  const labels = { loading: '연결 중', ready: 'SDK 준비 완료', disabled: '분석 꺼짐', unsupported: '이 환경은 SDK 지원 검사 미통과', failed: '연결 실패', timeout: '연결 시간 초과' };
+  function refresh() {
+    const state = host && host.analyticsStatus;
+    document.getElementById('status').textContent = state ? [
+      '상태: ' + (labels[state.state] || state.state),
+      '측정 ID: ' + state.measurementId,
+      '테스트 ID: ' + state.testId,
+      'SDK에 전달됨: ' + state.submitted + '개',
+      '마지막 이벤트: ' + (state.lastEvent || '없음'),
+      '서버 수신: Firebase DebugView에서 확인 필요'
+    ].join('\n') : '분석 스크립트를 불러오지 못했어요.';
+    document.getElementById('send').disabled = !state || state.state !== 'ready';
+  }
+  document.getElementById('send').addEventListener('click', function () {
+    host.analytics({ name: 'web_analytics_check', values: { test_id: host.analyticsStatus.testId } });
+    refresh();
+  });
+  document.getElementById('mode').textContent = '테스트 표시: analytics_debug=1';
+  if (params.get('platform') === 'onestore') document.getElementById('play').href = './?platform=onestore&analytics_debug=1';
+  refresh();
+  if (host && host.analyticsStatus) host.analyticsStatus.ready.then(refresh);
+</script>
+</html>
