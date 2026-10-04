@@ -34,6 +34,7 @@
     document.getElementById('status').textContent = state ? [
       '상태: ' + (labels[state.state] || state.state),
       '측정 ID: ' + state.measurementId,
+      'Google 태그 응답: ' + ({ pending: '확인 중', ready: '확인됨', timeout: '응답 지연 또는 차단', failed: '실패' }[state.googleTag] || '미확인'),
       '테스트 ID: ' + state.testId,
       'SDK에 전달됨: ' + state.submitted + '개',
       '마지막 이벤트: ' + (state.lastEvent || '없음'),
@@ -49,5 +50,7 @@
   if (params.get('platform') === 'onestore') document.getElementById('play').href = './?platform=onestore&analytics_debug=1';
   refresh();
   if (host && host.analyticsStatus) host.analyticsStatus.ready.then(refresh);
+  let refreshes = 0;
+  const refreshTimer = setInterval(function () { refresh(); if (++refreshes >= 20) clearInterval(refreshTimer); }, 1000);
 </script>
 </html>

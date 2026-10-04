@@ -32,7 +32,7 @@
     const debug = query.get("analytics_debug") === "1" || local || query.has("mockads") || query.has("mockiap");
     const status = host.analyticsStatus = {
       state: "loading", debug, measurementId: config && config.firebase && config.firebase.measurementId || "",
-      submitted: 0, queued: 0, dropped: 0, lastEvent: "",
+      submitted: 0, queued: 0, dropped: 0, lastEvent: "", googleTag: "pending",
       testId: "web-" + Date.now().toString(36),
       // 'submitted' means handed to the SDK, not confirmed in the Firebase console.
     };
@@ -120,6 +120,16 @@
         if (debug) settings.debug_mode = true;
         analytics = sdk.initializeAnalytics(app, { config: settings });
         status.state = "ready";
+        if (debug && typeof sdk.getGoogleAnalyticsClientId === "function") {
+          const tagTimeout = setTimeout(() => { status.googleTag = "timeout"; }, 15000);
+          sdk.getGoogleAnalyticsClientId(analytics).then(() => {
+            clearTimeout(tagTimeout);
+            status.googleTag = "ready";
+          }).catch(() => {
+            clearTimeout(tagTimeout);
+            status.googleTag = "failed";
+          });
+        }
         while (queue.length) submit(queue.shift());
         status.queued = 0;
         if (debug) host.analytics({ name: "web_analytics_check", values: { test_id: status.testId } });
