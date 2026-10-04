@@ -16,7 +16,7 @@
 <pre id="status" role="status">분석 연결 준비 중…</pre>
 <p>‘SDK에 전달됨’은 서버 수신 확인이 아니에요. 원스토어 앱과 일반 브라우저의 결과는 각각 확인해야 해요.</p>
 <p><a id="play" href="./?analytics_debug=1">게임에서 테스트하기</a></p>
-<script src="TemplateData/platform-config.js"></script>
+<script src="TemplateData/platform-config.js?v=20261005-analytics"></script>
 <script>
   // This diagnostic page only sends explicitly marked test traffic.
   const params = new URLSearchParams(location.search);
@@ -25,7 +25,7 @@
     history.replaceState(null, '', location.pathname + '?' + params);
   }
 </script>
-<script src="TemplateData/firebase-analytics.js"></script>
+<script src="TemplateData/firebase-analytics.js?v=20261005-2"></script>
 <script>
   const host = window.NeonCatHost;
   const labels = { loading: '연결 중', ready: 'SDK 준비 완료', disabled: '분석 꺼짐', unsupported: '이 환경은 SDK 지원 검사 미통과', failed: '연결 실패', timeout: '연결 시간 초과' };
